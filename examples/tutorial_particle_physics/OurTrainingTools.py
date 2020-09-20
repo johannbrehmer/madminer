@@ -30,6 +30,7 @@ class DataFile():
                 #print('%.15f' % (file['Data'][()][0][0]))
                 self.Values = torch.DoubleTensor(file['Values'][()])
                 self.Data = torch.DoubleTensor(file['Data'][()])
+                self.DataRaw = file['Data'][()]
                 self.Weights = torch.DoubleTensor(file['Weights'][()])
                 self.XS = self.Weights.mean()
                 self.ND = len(self.Weights)
