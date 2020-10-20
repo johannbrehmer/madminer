@@ -312,6 +312,8 @@ class OurModel(nn.Module):
         with torch.no_grad(): 
             Data, Parameters = self.Preprocess(Data, Parameters)  
         
+        #print(Data.mean(0), Data.std(0))
+        
         x1 = x2 = Data
         
         for i, Layer in enumerate(self.LinearLayerList1):
@@ -425,7 +427,34 @@ class OurModel(nn.Module):
         
         print('Model successfully loaded.')
         print('Path: %s'%str(FileName))
+
+    def Load_CPU(self, Name, Folder):
+### Loads the model from Folder/Name
+        FileName = Folder + Name + '.pth'
+        try:
+            IncompatibleKeys = self.load_state_dict(torch.load(FileName, map_location=torch.device('cpu'))['StateDict'])
+        except KeyError:
+            print('No state dictionary saved. Loading model failed.')
+            return 
         
+        if list(IncompatibleKeys)[0]:
+            print('Missing Keys: %s'%str(list(IncompatibleKeys)[0]))
+            print('Loading model failed. ')
+            return 
+        
+        if list(IncompatibleKeys)[1]:
+            print('Unexpected Keys: %s'%str(list(IncompatibleKeys)[0]))
+            print('Loading model failed. ')
+            return 
+        
+        self.Scaling = torch.load(FileName)['Scaling']
+        self.Shift = torch.load(FileName)['Shift']
+        self.ParameterScaling = torch.load(FileName)['ParameterScaling']
+        
+        print('Model successfully loaded.')
+        print('Path: %s'%str(FileName))
+
+       
     def Report(self): ### is it possibe to check if the model is in double?
         print('\nModel Report:')
         print('Preprocess Initialized: ' + str(hasattr(self, 'Shift')))
