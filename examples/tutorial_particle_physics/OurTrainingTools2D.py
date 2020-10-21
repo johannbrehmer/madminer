@@ -30,7 +30,6 @@ class DataFile():
                 #print('%.15f' % (file['Data'][()][0][0]))
                 self.Values = torch.DoubleTensor(file['Values'][()])
                 self.Data = torch.DoubleTensor(file['Data'][()])
-                self.DataRaw = file['Data'][()]
                 self.Weights = torch.DoubleTensor(file['Weights'][()])
                 self.XS = self.Weights.mean()
                 self.ND = len(self.Weights)
@@ -56,13 +55,10 @@ class OurTrainingData():
 ####### Load BSM data (stored in self.BSMDataFiles)
         if type(BSMfilepathlist) == list:
             if all(isinstance(n, str) for n in BSMfilepathlist):
-                self.BSMDataFiles = []
+                self.BSMDataFiles = [] 
                 for path in BSMfilepathlist:
                     temp =  DataFile(path, verbose=verbose)
-                    
-                    #if( (temp.Process == self.Process) and (temp.Parameters == self.Parameters) and (temp.Values != 0.) ):
-                    #    self.BSMDataFiles.append(temp)
-                    if (temp.Process == self.Process):
+                    if((temp.Process == self.Process) and (set(list(temp.Parameters.flatten())) == set(self.Parameters)) and (sum(temp.Values.flatten()) != 0.) ):
                         self.BSMDataFiles.append(temp)
                     else: 
                         print('File not valid: ' + path)
@@ -102,10 +98,7 @@ class OurTrainingData():
         self.BSMWeightsList = [DF.Weights[:N] for (DF, N) in zip(
             self.BSMDataFiles, self.BSMNDList)] 
         self.BSMXSList = [DF.XS for DF in self.BSMDataFiles]
-        
-        #print((self.BSMDataFiles[0]).Values[0][0])
-        
-        self.BSMParValList =  [torch.ones(N, dtype=torch.double)*DF.Values[0][0] for (DF, N) in zip(self.BSMDataFiles, self.BSMNDList)]
+        self.BSMParValList =  [torch.ones([N, len(self.Parameters)], dtype=torch.double)*DF.Values for (DF, N) in zip(self.BSMDataFiles, self.BSMNDList)]
         self.BSMTargetList = [torch.ones(N, dtype=torch.double) for N in self.BSMNDList] 
         
         
@@ -117,7 +110,7 @@ class OurTrainingData():
                 self.SMDataFiles = []
                 for path in SMfilepathlist:
                     temp =  DataFile(path, verbose=verbose)
-                    if( (temp.Process == self.Process) and (temp.Parameters == 'SM') and (temp.Values == 0.) ):
+                    if( (temp.Process == self.Process) and (temp.Parameters[0] == 'SM') and (sum(temp.Values.flatten()) == 0.) ):
                         self.SMDataFiles.append(temp)
                     else:
                         print('File not valid: ' + path)
@@ -172,7 +165,7 @@ class OurTrainingData():
     ##### of the original weights. This equals the SM cross-section as obtained in the specific sample at hand, times NBSM
         self.UsedSMWeightsList = self.SMWeights[:sum(self.UsedSMNDList)].split(self.UsedSMNDList)
         self.UsedSMWeightsList = [ self.UsedSMWeightsList[i]*self.BSMNDList[i]/self.UsedSMNDList[i] for i in range(len(BSMNRatioDataList))]   
-        self.UsedSMParValList =  [torch.ones(N, dtype=torch.double)*DF.Values[0][0] for (DF, N) in zip(self.BSMDataFiles, self.UsedSMNDList)]       
+        self.UsedSMParValList =  [torch.ones([N, len(self.Parameters)], dtype=torch.double)*DF.Values for (DF, N) in zip(self.BSMDataFiles, self.UsedSMNDList)]       
         self.UsedSMTargetList = [torch.zeros(N, dtype=torch.double) for N in self.UsedSMNDList]
 
 ####### Join SM with BSM data
